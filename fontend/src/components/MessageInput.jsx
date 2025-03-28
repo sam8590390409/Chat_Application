@@ -1,54 +1,47 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useChatStore } from "../store/useChatStore";
-import { X, Image, Send } from "lucide-react";
+import { Image, Send, X } from "lucide-react";
 import toast from "react-hot-toast";
 
 const MessageInput = () => {
   const [text, setText] = useState("");
-  const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const fileInputRef = useRef(null);
   const { sendMessage } = useChatStore();
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (!file) return;
-
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file");
       return;
     }
 
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onloadend = () => {
       setImagePreview(reader.result);
-      setImageFile(file); // Store the file object for FormData
     };
     reader.readAsDataURL(file);
   };
 
   const removeImage = () => {
     setImagePreview(null);
-    setImageFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!text.trim() && !imageFile) return;
-
-    const formData = new FormData();
-    formData.append("text", text.trim());
-    if (imageFile) {
-      formData.append("image", imageFile);
-    }
+    if (!text.trim() && !imagePreview) return;
 
     try {
-      await sendMessage(formData);
+      await sendMessage({
+        text: text.trim(),
+        image: imagePreview,
+      });
 
       // Clear form
       setText("");
-      removeImage();
+      setImagePreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error) {
       console.error("Failed to send message:", error);
     }
@@ -75,6 +68,7 @@ const MessageInput = () => {
           </div>
         </div>
       )}
+
       <form onSubmit={handleSendMessage} className="flex items-center gap-2">
         <div className="flex-1 flex gap-2">
           <input
@@ -112,5 +106,4 @@ const MessageInput = () => {
     </div>
   );
 };
-
 export default MessageInput;
