@@ -12,7 +12,9 @@ export const signup = async (req, res) => {
     }
 
     if (password.length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters" });
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters" });
     }
 
     const existingUser = await User.findOne({ email });
@@ -32,7 +34,7 @@ export const signup = async (req, res) => {
     await newUser.save(); // Ensure this is executed
 
     generateToken(newUser._id, res);
-    
+
     console.log("User Created:", newUser); // Debugging Log
 
     res.status(201).json({
@@ -47,44 +49,39 @@ export const signup = async (req, res) => {
   }
 };
 
+export const login = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Invaild credentails" });
+    }
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) {
+      return res.status(400).json({ message: "Invaild credentails" });
+    }
 
-export const login = async(req, res) => {
-  const {email,password} = req.body;
-try{
-  const user = await User.findOne({ email });
-  if (!user) {
-    return res.status(400).json({message: "Invaild credentails"});
+    generateToken(user._id, res);
+
+    res.status(200).json({
+      _id: user._id,
+      fullname: user.fullname,
+      email: user.email,
+      profilePic: user.profilePic,
+    });
+  } catch (error) {
+    console.error("Error in login", error.message);
+    res.status(500).json({ message: "Internel server error" });
   }
- const isPasswordCorrect= await bcrypt.compare(password, user.password);
- if (!isPasswordCorrect) {
-  return res.status(400).json({message:"Invaild credentails"});
-
- }
-
- generateToken(user._id, res);
-
- res.status(200).json({
-  _id:user._id,
-  fullname :  user.fullname,
-  email : user.email,
-  profilePic : user.profilePic,
- });
-
-
-
-}catch(error){
-  console.error("Error in login", error.message);
-  res.status(500).json({message: "Internel server error"});
-}
 };
 
 export const logout = (req, res) => {
-  try{
-    res.cookie("jwt","",{maxAge:0})
-    res.status(200).json({message:"Logout Successfullly"})
-  }catch(error){
+  try {
+    res.cookie("jwt", "", { maxAge: 0 });
+    res.status(200).json({ message: "Logout Successfullly" });
+  } catch (error) {
     console.log("error is logoput", error.message);
-    res.status(500).json({message:"Internel server error"});
+    res.status(500).json({ message: "Internel server error" });
   }
 };
 
@@ -102,8 +99,8 @@ export const updateProfile = async (req, res) => {
 
     // Update user profile picture
     const updateUser = await User.findByIdAndUpdate(
-      userId, 
-      { profilePic: uploadResponse.secure_url }, 
+      userId,
+      { profilePic: uploadResponse.secure_url },
       { new: true }
     );
 
@@ -118,13 +115,11 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-
-export const checkAuth=(req, res) => {
-  try{
-    res.status(200).json(req.user)
+export const checkAuth = (req, res) => {
+  try {
+    res.status(200).json(req.user);
+  } catch (error) {
+    console.log("error in checkauth controll", error.message);
+    res.status(500).json({ message: "internal server error" });
   }
-  catch(error){
-    console.log("error in checkauth controll",error.message);
-    res.status(500).json({message:"internal server error"})
-  }
-}
+};

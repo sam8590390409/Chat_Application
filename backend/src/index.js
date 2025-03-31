@@ -6,10 +6,9 @@ import cors from "cors";
 
 import authRouter from "./routes/auth.route.js";
 import MessageRoutes from "./routes/message.route.js";
+import { app, server } from "./lib/socket.js";
 
 dotenv.config(); // Load environment variables at the top
-
-const app = express();
 
 app.use(express.json({ limit: "50mb" })); // Increase request size limit
 app.use(cookieParser());
@@ -26,7 +25,7 @@ app.use("/api/messages", MessageRoutes);
 
 const PORT = process.env.PORT || 5000; // Add default fallback port
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   connectionDB();
 });
